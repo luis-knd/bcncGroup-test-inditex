@@ -18,7 +18,6 @@ product, and application date.
 - [Information about the Project](#information-about-the-project)
 - [Used Design Patterns](#used-design-patterns)
 
----
 
 ## Author Information
 
@@ -49,12 +48,12 @@ Before you begin, ensure you have the following installed on your local machine:
 
     Https repo:
    ```bash
-   git clone https://github.com/luis-knd/bcncGroupTest.git
+   git clone https://github.com/luis-knd/bcncGroup-test-inditex.git
    ```
    
     Ssh repo:
    ```bash
-   git clone git@github.com:luis-knd/bcncGroupTest.git
+   git clone git@github.com:luis-knd/bcncGroup-test-inditex.git
    ```
    
 2. Navigate to the project directory.
