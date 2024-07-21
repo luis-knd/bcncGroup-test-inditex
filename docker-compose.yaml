@@ -1,0 +1,21 @@
+services:
+  app:
+    container_name: bcnc_group_test_api
+    build: .
+    restart: on-failure
+    env_file: ./.env
+    ports:
+      - ${SPRING_LOCAL_PORT}:${SPRING_DOCKER_PORT}
+    networks:
+      - bcnc-group-red
+    volumes:
+      - ./docker/m2:/root/.m2
+    stdin_open: true
+    tty: true
+networks:
+  bcnc-group-red:
+    name: bcnc-group-red
+    driver: bridge
+
+volumes:
+  db:
