@@ -134,10 +134,15 @@ public class BrandController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
-        if (id != null) {
-            brandService.deleteById(id);
-            return ResponseHandler.generateResponse("Brand deleted successfully", HttpStatus.OK);
+        if (id == null || id <= 0) {
+            return ResponseHandler.generateResponse("Invalid id " + id, HttpStatus.BAD_REQUEST);
         }
-        return ResponseHandler.generateResponse("Invalid id", HttpStatus.BAD_REQUEST);
+
+        if (brandService.findById(id).isEmpty()) {
+            return ResponseHandler.generateResponse("Brand " + id + " not found", HttpStatus.NOT_FOUND);
+        }
+
+        brandService.deleteById(id);
+        return ResponseHandler.generateResponse("Brand deleted successfully", HttpStatus.OK);
     }
 }

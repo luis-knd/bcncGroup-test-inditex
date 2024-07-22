@@ -114,11 +114,48 @@ public class BrandControllerTest {
     void save_ShouldReturnBadRequest_WhenBrandNameIsInvalid() throws Exception {
         BrandDTO brandDTO = new BrandDTO("");
 
-        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/brands")
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post("/api/v1/brands")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(String.valueOf(brandDTO))
-        );
+            .content(new ObjectMapper().writeValueAsString(brandDTO));
+        ResultActions result = mockMvc.perform(request);
 
         result.andExpect(MockMvcResultMatchers.status().isBadRequest());
+        result.andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Brand name is required"));
+    }
+
+    @Test
+    public void delete_ExistingBrand() throws Exception {
+        Long brandId = 1L;
+        when(brandService.findById(brandId)).thenReturn(Optional.of(new Brand(brandId, "Test Brand")));
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/brands/{id}", brandId));
+
+        result
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Brand deleted successfully"));
+    }
+
+    @Test
+    public void delete_NonExistingBrandReturnsNotFound() throws Exception {
+        Long brandId = 999L;
+        when(brandService.findById(brandId)).thenReturn(Optional.empty());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/brands/{id}", brandId));
+
+        result
+            .andExpect(MockMvcResultMatchers.status().isNotFound())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Brand " + brandId + " not found"));
+    }
+
+    @Test
+    public void delete_BrandWithInvalidIdReturnsError() throws Exception {
+        Long brandId = 0L;
+        when(brandService.findById(brandId)).thenReturn(Optional.empty());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/brands/{id}", brandId));
+
+        result
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid id " + brandId));
     }
 }

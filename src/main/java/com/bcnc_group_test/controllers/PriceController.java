@@ -143,11 +143,16 @@ public class PriceController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
-        if (id != null) {
-            priceService.deleteById(id);
-            return ResponseHandler.generateResponse("Price deleted successfully", HttpStatus.OK);
+        if (id == null || id <= 0) {
+            return ResponseHandler.generateResponse("Invalid id " + id, HttpStatus.BAD_REQUEST);
         }
-        return ResponseHandler.generateResponse("Invalid id", HttpStatus.BAD_REQUEST);
+
+        if (priceService.findById(id).isEmpty()) {
+            return ResponseHandler.generateResponse("Price " + id + " not found", HttpStatus.NOT_FOUND);
+        }
+
+        priceService.deleteById(id);
+        return ResponseHandler.generateResponse("Price deleted successfully", HttpStatus.OK);
     }
 
 
