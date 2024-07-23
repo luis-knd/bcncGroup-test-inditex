@@ -16,9 +16,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -52,6 +54,72 @@ public class PriceControllerTest {
 
     private Price createPrice(long id, Brand brand, LocalDateTime startDate, LocalDateTime endDate, long priceList, Product product, int priority, double price, CurrencyCode currency) {
         return new Price(id, brand, startDate, endDate, priceList, product, priority, price, currency);
+    }
+
+    @Test
+    public void findAll_WithResultsAreValid() throws Exception {
+        List<Price> priceList = mockPriceList();
+        when(priceService.findAll()).thenReturn(priceList);
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/prices")
+            .accept(MediaType.APPLICATION_JSON));
+
+        result
+            .andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("OK"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].brand.name").value("Brand 1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].brand.name").value("Brand 2"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].product.name").value("Product 1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].product.name").value("Product 2"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].currency").value("EUR"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].currency").value("USD"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.count").value(2));
+    }
+
+    private static List<Price> mockPriceList() {
+        Brand brandOne = new Brand(1L, "Brand 1");
+        Brand brandTwo = new Brand(2L, "Brand 2");
+        LocalDateTime startDate = LocalDateTime.of(2020, 12, 1, 23, 59, 59);
+        LocalDateTime endDate = LocalDateTime.of(2020, 12, 31, 23, 59, 59);
+        return List.of(
+            new Price(1L, brandOne, startDate, endDate, 1L, new Product(1L, "Product 1"), 1, 35.5, CurrencyCode.EUR),
+            new Price(2L, brandTwo, startDate, endDate, 2L, new Product(2L, "Product 2"), 0, 25.45, CurrencyCode.USD)
+        );
+    }
+
+    @Test
+    public void findAll_WithoutResults() throws Exception {
+        when(priceService.findAll()).thenReturn(List.of());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/prices")
+            .accept(MediaType.APPLICATION_JSON));
+
+        result
+            .andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data").isEmpty())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("OK"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.count").value(0));
+    }
+
+    @Test
+    public void findById_ExistingPrice() throws Exception {
+        Long priceId = 1L;
+        List<Price> priceList = mockPriceList();
+        when(priceService.findById(1L)).thenReturn(priceList.stream().filter(price -> Objects.equals(price.getId(), priceId)).findFirst());
+
+        ResultActions result = mockMvc.perform(
+            MockMvcRequestBuilders.get("/api/v1/prices/{id}", priceId).accept(MediaType.APPLICATION_JSON)
+        );
+
+        result
+            .andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("OK"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.brand.name").value("Brand 1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.product.name").value("Product 1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.currency").value("EUR"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.priceList").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.count").value(1));
     }
 
     @Test
@@ -275,5 +343,59 @@ public class PriceControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.data.priceList").value(4))
             .andExpect(MockMvcResultMatchers.jsonPath("$.count").value(1))
             .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("OK"));
+    }
+
+    @Test
+    public void delete_ExistingPrice() throws Exception {
+        Long priceId = 1L;
+        Brand brand = new Brand(1L, "Zara");
+        Product product = new Product(1L, "Blue Jean");
+        LocalDateTime startDate = LocalDateTime.of(2020, 12, 1, 23, 59, 59);
+        LocalDateTime endDate = LocalDateTime.of(2020, 12, 31, 23, 59, 59);
+
+        Price price = new Price(priceId, brand, startDate, endDate, 1L, product, 1, 35.5, CurrencyCode.EUR);
+        when(priceService.findById(priceId)).thenReturn(Optional.of(price));
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/prices/{id}", priceId));
+
+        result
+            .andExpect(status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Price deleted successfully"));
+    }
+
+    @Test
+    public void delete_NonExistingPriceReturnsNotFound() throws Exception {
+        Long priceId = 999L;
+        when(priceService.findById(priceId)).thenReturn(Optional.empty());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/prices/{id}", priceId));
+
+        result
+            .andExpect(status().isNotFound())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Price " + priceId + " not found"));
+    }
+
+    @Test
+    public void delete_PriceWithInvalidIdReturnsError() throws Exception {
+        Long priceId = -10L;
+        when(priceService.findById(priceId)).thenReturn(Optional.empty());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/prices/{id}", priceId));
+
+        result
+            .andExpect(status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid id " + priceId));
+    }
+
+    @Test
+    public void delete_PriceWithNullIdReturnsError() throws Exception {
+        Long priceId = null;
+        when(priceService.findById(priceId)).thenReturn(Optional.empty());
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/prices/{id}", priceId));
+
+        result
+            .andExpect(status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("The sent value is invalid"));
     }
 }

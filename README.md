@@ -1,6 +1,6 @@
-# BCNC Group - Backend Developer Exam  :detective:
+# Inditex - Backend Developer Exam  :detective:
 
-This project is part of an interview process for a backend developer position at BCNC Group. 
+This project is part of an interview process for a backend developer position at Inditex. 
 The application is a Spring Boot service that provides an endpoint for querying product prices based on brand,
 product, and application date.
 

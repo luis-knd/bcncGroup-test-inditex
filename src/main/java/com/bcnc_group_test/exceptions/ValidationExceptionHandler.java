@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,6 +33,12 @@ public class ValidationExceptionHandler {
         String errorMessage = String.format("The value %s in the field %s is invalid. Expected format: %s",
             valueSent, parameterName, expectedFormat);
 
+        return ResponseHandler.generateResponse(errorMessage, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> notValid(NoResourceFoundException exception, HttpServletRequest request) {
+        String errorMessage = "The sent value is invalid";
         return ResponseHandler.generateResponse(errorMessage, HttpStatus.BAD_REQUEST);
     }
 

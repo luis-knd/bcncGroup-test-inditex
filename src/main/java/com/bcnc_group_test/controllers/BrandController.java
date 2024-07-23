@@ -11,8 +11,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Optional;
 
 @Tag(name = "Brand", description = "Brand management API")
 @RestController
+@Validated
 @RequestMapping("/api/v1/brands")
 public class BrandController {
 
@@ -133,8 +136,8 @@ public class BrandController {
         ),
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) {
-        if (id == null || id <= 0) {
+    public ResponseEntity<?> deleteById(@PathVariable @NotNull Long id) {
+        if (id <= 0) {
             return ResponseHandler.generateResponse("Invalid id " + id, HttpStatus.BAD_REQUEST);
         }
 
